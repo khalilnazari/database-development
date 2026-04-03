@@ -68,4 +68,35 @@ Types of subquery
 - Row
 - Table
 
+#### String functions
+
+- CONCAT
+- LENGTH
+- REPLACE
+- SUBSTRING
+- UPPER
+- LOWER
+
+#### Numeric functions
+
+- FLOOR
+- ABS
+- MOD
+- ROUND
+- CEILING
+
+#### Date and Time
+
+- DATE
+- TIME
+- TIMESTAMP
+- DATEPART
+- DATEADD
+
+#### Conditionals
+
+- CASE
+- NULLIF
+- COALESCE
+
 ### Choose one RDBMS (Go with PostgreSQL) and learn it's SQL dailect
