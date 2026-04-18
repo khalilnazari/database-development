@@ -90,7 +90,7 @@ Design a database schema that satisfies these requirements. Consider:
 
 ---
 
-# Solutions - Creating databsae schema
+## Solutions - Creating databsae schema
 
 As you can see the Step 1 (Gather Business Requirements), Step 2 (Analyze and Define the Scope), Step 3 (Identify Entities and Attributes) are done.
 
@@ -228,3 +228,165 @@ I found these are the nouns in business requirements:
 
   Super Keys: Any set containing both user_id and task_id. Examples:
   (user_id, task_id), (user_id, task_id, any other attribute)
+
+### Creating the relations between entities
+
+Based solely on the entity definitions and keys you provided, here are the **relationships** between the entities.
+
+#### Organization ↔ User (via user_organization)
+
+- **Relationship:** Many-to-Many
+- **Description:** An organization can have many users. A user can belong to many organizations.
+- **Foreign Keys:** `user_organization.user_id` references `User.id`, `user_organization.organization_id` references `Organization.id`
+
+#### Organization → Project
+
+- **Relationship:** One-to-Many
+- **Description:** An organization can have many projects. A project belongs to one organization.
+- **Foreign Key:** `Project.organization_id` references `Organization.id`
+
+#### User (as manager) → Project
+
+- **Relationship:** One-to-Many
+- **Description:** A user (acting as manager) can manage many projects. A project has one manager.
+- **Foreign Key:** `Project.manager_id` references `User.id`
+
+#### Project → Task
+
+- **Relationship:** One-to-Many
+- **Description:** A project can have many tasks. A task belongs to one project.
+- **Foreign Key:** `Task.project_id` references `Project.id`
+
+#### User (as creator) → Task
+
+- **Relationship:** One-to-Many
+- **Description:** A user can create many tasks. A task is created by one user.
+- **Foreign Key:** `Task.created_by_user` references `User.id`
+
+#### User (as assignee) ↔ Task (via task_assigned_user)
+
+- **Relationship:** Many-to-Many
+- **Description:** A user can be assigned to many tasks. A task can be assigned to many users.
+- **Foreign Keys:** `task_assigned_user.user_id` references `User.id`, `task_assigned_user.task_id` references `Task.id`
+
+#### Project ↔ User (via Project.member? Not directly in schema)
+
+- Based on your provided schema, there is no direct `project_member` table. However, `User` has a `project_id` FK, which implies:
+- **Relationship:** One-to-Many (from Project to User)
+- **Description:** A project can have many users (members). A user belongs to one project.
+- **Foreign Key:** `User.project_id` references `Project.id`
+
+#### Tracker ↔ User
+
+- **Relationship:** Many-to-One
+- **Description:** A tracker entry belongs to one user. A user can have many tracker entries.
+- **Foreign Key:** `Tracker.user_id` references `User.id`
+
+#### Tracker ↔ Task
+
+- **Relationship:** Many-to-One
+- **Description:** A tracker entry belongs to one task. A task can have many tracker entries.
+- **Foreign Key:** `Tracker.task_id` references `Task.id`
+
+#### Tracker ↔ Project
+
+- **Relationship:** Many-to-One
+- **Description:** A tracker entry belongs to one project. A project can have many tracker entries.
+- **Foreign Key:** `Tracker.project_id` references `Project.id`
+
+#### Summary Table of Relationships
+
+| From Entity  | To Entity | Relationship Type       | Via Foreign Key           |
+| ------------ | --------- | ----------------------- | ------------------------- |
+| Organization | User      | Many-to-Many            | `user_organization`       |
+| Organization | Project   | One-to-Many             | `Project.organization_id` |
+| User         | Project   | One-to-Many (manager)   | `Project.manager_id`      |
+| Project      | Task      | One-to-Many             | `Task.project_id`         |
+| User         | Task      | One-to-Many (creator)   | `Task.created_by_user`    |
+| User         | Task      | Many-to-Many (assignee) | `task_assigned_user`      |
+| Project      | User      | One-to-Many (member)    | `User.project_id`         |
+| User         | Tracker   | One-to-Many             | `Tracker.user_id`         |
+| Task         | Tracker   | One-to-Many             | `Tracker.task_id`         |
+| Project      | Tracker   | One-to-Many             | `Tracker.project_id`      |
+
+### Normalization
+
+#### 1NF
+
+First normalizatio nform requires below:
+
+- Atomic values (no repeating groups or arrays)
+- A primary key defined for each relation
+
+**Organization**
+
+| Attribute | Type   | Constraints   |
+| --------- | ------ | ------------- |
+| id        | PK     | Unique        |
+| namae     | Unique | Atomic string |
+
+**Project**
+
+| Attribute       | Type                          | Constraints   |
+| --------------- | ----------------------------- | ------------- |
+| id              | PK                            | Unique        |
+| organization_id | FK → Organization.id          | Atomic        |
+| manager_id      | FK → User.id                  | Atomic        |
+| category_id     | FK → (assumed Category table) | Atomic        |
+| name            | Unique                        | Atomic string |
+
+**User**
+
+| Attribute  | Type            | Constraints   |
+| ---------- | --------------- | ------------- |
+| id         | PK              | Unique        |
+| project_id | FK → Project.id | Atomic        |
+| email      | Unique          | Atomic string |
+
+**Task**
+
+| Attribute       | Type            | Constraints |
+| --------------- | --------------- | ----------- |
+| id              | PK              | Unique      |
+| user_id         | FK → User.id    | Atomic      |
+| project_id      | FK → Project.id | Atomic      |
+| created_by_user | FK → User.id    | Atomic      |
+
+**Tracker**
+
+| Attribute  | Type            | Constraints |
+| ---------- | --------------- | ----------- |
+| id         | PK              | Unique      |
+| user_id    | FK → User.id    | Atomic      |
+| task_id    | FK → Task.id    | Atomic      |
+| project_id | FK → Project.id | Atomic      |
+
+**user_organization**
+
+| Attribute       | Type                 | Constraints          |
+| --------------- | -------------------- | -------------------- |
+| user_id         | FK → User.id         | Part of composite PK |
+| organization_id | FK → Organization.id | Part of composite PK |
+
+**Primary Key:** (`user_id`, `organization_id`)
+
+**task_assigned_user**
+
+| Attribute | Type         | Constraints          |
+| --------- | ------------ | -------------------- |
+| user_id   | FK → User.id | Part of composite PK |
+| task_id   | FK → Task.id | Part of composite PK |
+
+**Primary Key:** (`user_id`, `task_id`)
+
+**Summary of 1NF Compliance**
+
+| Relation           | Repeating Groups Removed? | Atomic Values? | Primary Key Defined?               | In 1NF? |
+| ------------------ | ------------------------- | -------------- | ---------------------------------- | ------- |
+| Organization       | Yes                       | Yes            | Yes (`id`)                         | ✓       |
+| Project            | Yes                       | Yes            | Yes (`id`)                         | ✓       |
+| User               | Yes                       | Yes            | Yes (`id`)                         | ✓       |
+| Task               | Yes                       | Yes            | Yes (`id`)                         | ✓       |
+| Tracker            | Yes                       | Yes            | Yes (`id`)                         | ✓       |
+| user_organization  | Yes                       | Yes            | Yes (`user_id`, `organization_id`) | ✓       |
+| task_assigned_user | Yes                       | Yes            | Yes (`user_id`, `task_id`)         | ✓       |
