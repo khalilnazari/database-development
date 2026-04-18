@@ -87,3 +87,74 @@ Design a database schema that satisfies these requirements. Consider:
 - What auditing requirements might exist?
 - How would you design for scalability if the system grows to millions of records?
 - What security considerations should be implemented at the database level?
+
+---
+
+# Solutions - Creating databsae schema
+
+As you can see the Step 1 (Gather Business Requirements), Step 2 (Analyze and Define the Scope), Step 3 (Identify Entities and Attributes) are done.
+
+### Entity indentification
+
+I found these are the nouns in business requirements:
+
+- Organization (department / teams)
+- Project
+- User
+- Task
+- Time Tacker
+- Notification
+
+### Entity attributes indentification
+
+- Organization
+  No attributes are give, let's add possible/required attributes:
+
+- Project
+  Attributes:
+  - name
+  - desription
+  - state date
+  - end date
+  - status
+  - members
+  - manager
+  - categoriy
+  - comments
+
+- User
+  Attributes:
+  - email
+  - name
+  - password
+  - job title
+  - phone
+  - porifle picture
+  - role
+
+- Task
+  Attributes:
+  - title
+  - description
+  - priority
+  - status
+  - creation date
+  - due date
+  - completion date
+  - assigned to member
+  - sub tasks
+  - depend on tasks
+  - comments
+- Tracker
+  Attributes:
+  - duration (time spent on a task)
+  - time spent per week
+
+- Notification
+  Attributes:
+  - types
+  - read status
+  - preferences
+
+- Reporting requirements
+  This could be a featuer of the app that collect the data from different entity and sent it user.
