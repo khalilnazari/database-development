@@ -145,6 +145,7 @@ I found these are the nouns in business requirements:
   - sub tasks
   - depend on tasks
   - comments
+
 - Tracker
   Attributes:
   - duration (time spent on a task)
@@ -158,3 +159,72 @@ I found these are the nouns in business requirements:
 
 - Reporting requirements
   This could be a featuer of the app that collect the data from different entity and sent it user.
+
+### Determining the keys
+
+- Organization
+  id - PK
+  namae - unique
+
+  Candidate Keys: id, namae
+  Super Keys: Any set containing at least one candidate key. Examples:
+  (id), (namae), (id, namae), (id, namae, any other attribute)
+
+- Project
+  id - PK
+  organization_id - FK
+  manager_id - FK
+  category_id - FK
+  name - unique
+
+  Candidate Keys: id, name
+  Super Keys: Any set containing id or name. Examples:
+  (id), (name), (id, organization_id), (name, manager_id), (id, name, category_id)
+
+- User
+  id - PK
+  project_id - FK
+  email - unique
+
+  Candidate Keys: id, email
+  Super Keys: Any set containing id or email. Examples:
+  (id), (email), (id, project_id), (email, project_id)
+
+- Task
+  id - PK
+  user_id - FK
+  project_id - FK
+  created_by_user - FK
+
+  Candidate Keys: id only
+  (user_id, project_id) could be a candidate if each user has only one task per project, but requirement does not specify. From given constraints, only id is explicitly unique.
+  Super Keys: Any set containing id. Examples:
+  (id), (id, user_id), (id, project_id), (id, created_by_user)
+
+- Tracker
+  id - PK
+  user_id - FK
+  task_id - FK
+  project_id - FK
+
+  Candidate Keys: id only
+  (No other unique constraint provided)
+  Super Keys: Any set containing id. Examples:
+  (id), (id, user_id), (id, task_id), (id, project_id)
+
+- User and Organnizatin (user_organization)
+  user_id - FK
+  organzation_id - FK
+
+  Candidate Keys: (user_id, organization_id) – assuming a user cannot belong to the same organization twice
+  Super Keys: Any set containing both user_id and organization_id. Examples:
+  (user_id, organization_id), (user_id, organization_id, any other attribute)
+
+- User and Organnizatin (task_assigned_user)
+  user_id - FK
+  task_id - FK
+
+  Candidate Keys: (user_id, task_id) – assuming a user cannot be assigned to the same task twice
+
+  Super Keys: Any set containing both user_id and task_id. Examples:
+  (user_id, task_id), (user_id, task_id, any other attribute)
