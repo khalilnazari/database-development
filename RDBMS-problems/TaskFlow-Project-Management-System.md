@@ -584,6 +584,445 @@ We need to ensure below rules meet for 3NF:
 ### Consceptual data model diagram
 
 I used dbdiagram.io to generate the diagram
-LINK: https://dbdiagram.io/d/69e438f20aa78f6bc109ea68
+LINK: https://dbdiagram.io/d/TaskFlow-data-model-69e438f20aa78f6bc109ea68
 
 ![TaskFlow database caceptual data model](/RDBMS-problems/diagrams/TaskFlow-Database-Data-mdel.png)
+
+```dbml
+// Conceptual Data Model for TaskFlow
+// Crow's foot notation – readable by business stakeholders
+
+Table Organization {
+  id integer [pk, unique]           // unique identifier
+  namae string [unique]             // organization name
+}
+
+Table User {
+  id integer [pk, unique]
+  email string [unique]
+  name string
+  password string
+  job_title string [null]           // optional
+  department string [null]          // optional
+  phone_number string [null]        // optional
+  profile_picture string [null]     // optional
+  project_id integer [ref: > Project.id]  // each user belongs to one project (simplified)
+}
+
+Table Project {
+  id integer [pk, unique]
+  name string [unique]
+  description string
+  start_date date
+  end_date date [null]
+  status string                    // Planning, Active, On Hold, Completed, Cancelled
+  organization_id integer [ref: > Organization.id]
+  manager_id integer [ref: > User.id]
+  category_id integer [ref: > Category.id]   // folder/category
+}
+
+Table Category {
+  id integer [pk]
+  name string
+  project_id integer [ref: > Project.id]
+}
+
+Table Task {
+  id integer [pk, unique]
+  title string
+  description string
+  priority string                  // Low, Medium, High, Critical
+  status string                    // To Do, In Progress, In Review, Done
+  creation_date date
+  due_date date
+  completion_date date [null]
+  user_id integer [ref: > User.id]           // assigned user (one)
+  project_id integer [ref: > Project.id]
+  created_by_user integer [ref: > User.id]
+}
+
+Table Tracker {
+  id integer [pk, unique]
+  date date
+  duration integer                  // in minutes or hours
+  description_of_work_done string
+  user_id integer [ref: > User.id]
+  task_id integer [ref: > Task.id]
+  project_id integer [ref: > Project.id]
+}
+
+// Junction: User <-> Organization (many-to-many)
+Table UserOrganization {
+  user_id integer [ref: > User.id]
+  organization_id integer [ref: > Organization.id]
+  role string                      // Admin, Manager, Member
+  indexes {
+    (user_id, organization_id) [pk]
+  }
+}
+
+// Junction: User <-> Task (many-to-many for assignments)
+Table TaskAssignedUser {
+  user_id integer [ref: > User.id]
+  task_id integer [ref: > Task.id]
+  indexes {
+    (user_id, task_id) [pk]
+  }
+}
+
+// Additional entities from business requirement
+
+Table Comment {
+  id integer [pk]
+  content text
+  created_at datetime
+  user_id integer [ref: > User.id]
+  task_id integer [ref: > Task.id]      // comment on a task
+  project_id integer [ref: > Project.id] // comment on a project (optional)
+}
+
+Table Attachment {
+  id integer [pk]
+  file_url string
+  uploaded_by integer [ref: > User.id]
+  uploaded_at datetime
+  task_id integer [ref: > Task.id]
+}
+
+Table Notification {
+  id integer [pk]
+  type string                       // task assigned, @mention, deadline approaching, task completed
+  is_read boolean
+  user_id integer [ref: > User.id]
+}
+
+Table NotificationPreference {
+  user_id integer [pk, ref: > User.id]
+  email boolean
+  in_app boolean
+  both boolean
+}
+
+// Relationships (crow's foot notation is expressed via ref arrows above)
+// For visual clarity, the following relationships are already captured by foreign keys:
+
+// Organization 1---* Project
+// User (manager) 1---* Project
+// Project 1---* Task
+// User (creator) 1---* Task
+// User *---* Organization (via UserOrganization)
+// User *---* Task (via TaskAssignedUser)
+// Project 1---* Tracker
+// Task 1---* Tracker
+// Task 1---* Comment
+// Task 1---* Attachment
+// User 1---* Notification
+// User 1---1 NotificationPreference
+```
+
+### Logical ER diagram
+
+I used dbdiagram.io to generate the diagram
+LINK: https://dbdiagram.io/d/TaskFlow-Logical-ER-diagram-69e440c3a5db712fe58924ae
+
+![TaskFlow database Logical ER diagram](/RDBMS-problems/diagrams/TaskFlow-Database-logicl-ER-diagram.png)
+
+dbdiagram.io quryies
+
+```dbml
+// Logical Data Model for TaskFlow
+// Crow's Foot notation – ready for implementation
+
+// ---------- Enumerated Types (as comments for clarity) ----------
+// Project.status: 'Planning', 'Active', 'On Hold', 'Completed', 'Cancelled'
+// Task.priority: 'Low', 'Medium', 'High', 'Critical'
+// Task.status: 'To Do', 'In Progress', 'In Review', 'Done'
+// UserOrganization.role: 'Admin', 'Manager', 'Member'
+// Notification.type: 'task assigned', '@mention', 'deadline approaching', 'task completed'
+
+// ---------- Entities ----------
+
+Table Organization {
+  id integer [pk, unique]
+  name string [unique]                       // organization name
+}
+
+Table User {
+  id integer [pk, unique]
+  email string [unique]
+  name string
+  password string
+  job_title string [null]                    // optional
+  department string [null]                   // optional
+  phone_number string [null]                 // optional
+  profile_picture string [null]              // optional
+}
+
+Table UserOrganization {
+  user_id integer [ref: > User.id]
+  organization_id integer [ref: > Organization.id]
+  role string                                 // Admin, Manager, Member
+  indexes {
+    (user_id, organization_id) [pk]          // composite primary key
+  }
+}
+
+Table Project {
+  id integer [pk, unique]
+  name string [unique]
+  description string
+  start_date date
+  end_date date [null]
+  status string                              // Planning, Active, On Hold, Completed, Cancelled
+  organization_id integer [ref: > Organization.id, not null]
+  manager_id integer [ref: > User.id, not null]   // project manager
+  category_id integer [ref: > Category.id, null]  // folder/category
+}
+
+Table Category {
+  id integer [pk]
+  name string
+  organization_id integer [ref: > Organization.id, not null]  // categories belong to an org
+}
+
+Table Task {
+  id integer [pk, unique]
+  title string
+  description string
+  priority string                            // Low, Medium, High, Critical
+  status string                              // To Do, In Progress, In Review, Done
+  creation_date date
+  due_date date
+  completion_date date [null]
+  project_id integer [ref: > Project.id, not null]
+  parent_task_id integer [ref: > Task.id, null]   // for subtasks (self-reference)
+}
+
+Table TaskAssignment {
+  user_id integer [ref: > User.id]
+  task_id integer [ref: > Task.id]
+  indexes {
+    (user_id, task_id) [pk]                  // composite primary key
+  }
+}
+
+Table TaskDependency {
+  id integer [pk]
+  task_id integer [ref: > Task.id, not null]
+  depends_on_task_id integer [ref: > Task.id, not null]
+  // business rule: no circular references (enforced by application)
+}
+
+Table TimeEntry {
+  id integer [pk]
+  date date
+  duration decimal                             // hours or minutes
+  description_of_work text
+  user_id integer [ref: > User.id, not null]
+  task_id integer [ref: > Task.id, not null]
+}
+
+Table Timer {
+  id integer [pk]
+  start_datetime datetime
+  end_datetime datetime [null]                 // null = timer still running
+  user_id integer [ref: > User.id, not null]
+  task_id integer [ref: > Task.id, not null]
+}
+
+Table Comment {
+  id integer [pk]
+  content text
+  created_at datetime
+  user_id integer [ref: > User.id, not null]
+  task_id integer [ref: > Task.id, null]       // comment on a task
+  project_id integer [ref: > Project.id, null] // comment on a project
+  // at least one of task_id or project_id must be non‑null (app rule)
+}
+
+Table Mention {
+  id integer [pk]
+  comment_id integer [ref: > Comment.id, not null]
+  mentioned_user_id integer [ref: > User.id, not null]
+}
+
+Table Attachment {
+  id integer [pk]
+  file_url string
+  uploaded_by integer [ref: > User.id, not null]
+  uploaded_at datetime
+  task_id integer [ref: > Task.id, not null]
+}
+
+Table Notification {
+  id integer [pk]
+  type string                                 // task assigned, @mention, deadline approaching, task completed
+  is_read boolean
+  created_at datetime
+  user_id integer [ref: > User.id, not null]
+  task_id integer [ref: > Task.id, null]      // for task‑related notifications
+  comment_id integer [ref: > Comment.id, null] // for @mention notifications
+}
+
+Table NotificationPreference {
+  user_id integer [pk, ref: > User.id]
+  email_notifications boolean
+  in_app_notifications boolean
+}
+
+// ---------- Relationship Summary (Crow's Foot cardinalities are implied by foreign keys above) ----------
+// Organization 1---* Project
+// Organization 1---* Category
+// User 1---* Project (as manager)
+// Project 1---* Task
+// Task 1---* Task (as subtask, self-reference)
+// User *---* Task (via TaskAssignment)
+// Task 1---* TaskDependency (as dependent) and 1---* TaskDependency (as prerequisite)
+// User 1---* TimeEntry
+// Task 1---* TimeEntry
+// User 1---* Timer
+// Task 1---* Timer
+// User 1---* Comment
+// Task 0---* Comment
+// Project 0---* Comment
+// Comment 1---* Mention
+// User 1---* Mention (as mentioned user)
+// User 1---* Attachment (as uploader)
+// Task 1---* Attachment
+// User 1---* Notification
+// Task 0---* Notification (optional)
+// Comment 0---* Notification (optional)
+// User 1---1 NotificationPreference
+```
+
+### PosgreSQL Queries
+
+I purposefully added the FK constraint after tables creation by altering the tables. But we can definitely put the at table creaton time.
+
+```sql
+CREATE TABLE "Organization" (
+  "id" integer UNIQUE PRIMARY KEY,
+  "namae" string UNIQUE
+);
+
+CREATE TABLE "User" (
+  "id" integer UNIQUE PRIMARY KEY,
+  "email" string UNIQUE,
+  "name" string,
+  "password" string,
+  "job_title" string,
+  "department" string,
+  "phone_number" string,
+  "profile_picture" string,
+  "project_id" integer
+);
+
+CREATE TABLE "Project" (
+  "id" integer UNIQUE PRIMARY KEY,
+  "name" string UNIQUE,
+  "description" string,
+  "start_date" date,
+  "end_date" date,
+  "status" string,
+  "organization_id" integer,
+  "manager_id" integer,
+  "category_id" integer
+);
+
+CREATE TABLE "Category" (
+  "id" integer PRIMARY KEY,
+  "name" string,
+  "project_id" integer
+);
+
+CREATE TABLE "Task" (
+  "id" integer UNIQUE PRIMARY KEY,
+  "title" string,
+  "description" string,
+  "priority" string,
+  "status" string,
+  "creation_date" date,
+  "due_date" date,
+  "completion_date" date,
+  "user_id" integer,
+  "project_id" integer,
+  "created_by_user" integer
+);
+
+CREATE TABLE "Tracker" (
+  "id" integer UNIQUE PRIMARY KEY,
+  "date" date,
+  "duration" integer,
+  "description_of_work_done" string,
+  "user_id" integer,
+  "task_id" integer,
+  "project_id" integer
+);
+
+CREATE TABLE "UserOrganization" (
+  "user_id" integer,
+  "organization_id" integer,
+  "role" string,
+  PRIMARY KEY ("user_id", "organization_id")
+);
+
+CREATE TABLE "TaskAssignedUser" (
+  "user_id" integer,
+  "task_id" integer,
+  PRIMARY KEY ("user_id", "task_id")
+);
+
+CREATE TABLE "Comment" (
+  "id" integer PRIMARY KEY,
+  "content" text,
+  "created_at" datetime,
+  "user_id" integer,
+  "task_id" integer,
+  "project_id" integer
+);
+
+CREATE TABLE "Attachment" (
+  "id" integer PRIMARY KEY,
+  "file_url" string,
+  "uploaded_by" integer,
+  "uploaded_at" datetime,
+  "task_id" integer
+);
+
+CREATE TABLE "Notification" (
+  "id" integer PRIMARY KEY,
+  "type" string,
+  "is_read" boolean,
+  "user_id" integer
+);
+
+CREATE TABLE "NotificationPreference" (
+  "user_id" integer PRIMARY KEY,
+  "email" boolean,
+  "in_app" boolean,
+  "both" boolean
+);
+
+ALTER TABLE "User" ADD FOREIGN KEY ("project_id") REFERENCES "Project" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Project" ADD FOREIGN KEY ("organization_id") REFERENCES "Organization" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Project" ADD FOREIGN KEY ("manager_id") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Project" ADD FOREIGN KEY ("category_id") REFERENCES "Category" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Category" ADD FOREIGN KEY ("project_id") REFERENCES "Project" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Task" ADD FOREIGN KEY ("user_id") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Task" ADD FOREIGN KEY ("project_id") REFERENCES "Project" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Task" ADD FOREIGN KEY ("created_by_user") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Tracker" ADD FOREIGN KEY ("user_id") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Tracker" ADD FOREIGN KEY ("task_id") REFERENCES "Task" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Tracker" ADD FOREIGN KEY ("project_id") REFERENCES "Project" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "UserOrganization" ADD FOREIGN KEY ("user_id") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "UserOrganization" ADD FOREIGN KEY ("organization_id") REFERENCES "Organization" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "TaskAssignedUser" ADD FOREIGN KEY ("user_id") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "TaskAssignedUser" ADD FOREIGN KEY ("task_id") REFERENCES "Task" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Comment" ADD FOREIGN KEY ("user_id") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Comment" ADD FOREIGN KEY ("task_id") REFERENCES "Task" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Comment" ADD FOREIGN KEY ("project_id") REFERENCES "Project" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Attachment" ADD FOREIGN KEY ("uploaded_by") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Attachment" ADD FOREIGN KEY ("task_id") REFERENCES "Task" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "Notification" ADD FOREIGN KEY ("user_id") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+ALTER TABLE "NotificationPreference" ADD FOREIGN KEY ("user_id") REFERENCES "User" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+```
