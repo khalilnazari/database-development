@@ -390,3 +390,115 @@ First normalizatio nform requires below:
 | Tracker            | Yes                       | Yes            | Yes (`id`)                         | ✓       |
 | user_organization  | Yes                       | Yes            | Yes (`user_id`, `organization_id`) | ✓       |
 | task_assigned_user | Yes                       | Yes            | Yes (`user_id`, `task_id`)         | ✓       |
+
+#### 2NF
+
+For 2NF we need to make sure below rules meets.
+
+- The relation must already be in 1NF
+- No partial dependencies (no non-prime attribute depends on only part of a composite primary key)
+
+##### Analysis of Partial Dependencies
+
+**Organization**
+
+- **Primary Key:** `id` (single attribute)
+- **No partial dependencies possible** (single-attribute PK)
+- **Status:** Already in 2NF
+
+**Project**
+
+- **Primary Key:** `id` (single attribute)
+- **No partial dependencies possible**
+- **Status:** Already in 2NF
+
+**User**
+
+- **Primary Key:** `id` (single attribute)
+- **No partial dependencies possible**
+- **Status:** Already in 2NF
+
+**Task**
+
+- **Primary Key:** `id` (single attribute)
+- **No partial dependencies possible**
+- **Status:** Already in 2NF
+
+**Tracker**
+
+- **Primary Key:** `id` (single attribute)
+- **No partial dependencies possible**
+- **Status:** Already in 2NF
+
+**user_organization**
+
+- **Primary Key:** (`user_id`, `organization_id`) - composite key
+- **Non-prime attributes:** None
+- **No partial dependencies possible** (no non-prime attributes to depend on part of the key)
+- **Status:** Already in 2NF
+
+**task_assigned_user**
+
+- **Primary Key:** (`user_id`, `task_id`) - composite key
+- **Non-prime attributes:** None
+- **No partial dependencies possible** (no non-prime attributes to depend on part of the key)
+- **Status:** Already in 2NF
+
+#### 2NF Result
+
+**No decompositions are required.** All relations already satisfy 2NF because:
+
+| Relation           | Primary Key Type                         | Non-prime Attributes                                   | Partial Dependencies?        | In 2NF? |
+| ------------------ | ---------------------------------------- | ------------------------------------------------------ | ---------------------------- | ------- |
+| Organization       | Single attribute (`id`)                  | None (only PK and unique constraint)                   | No                           | ✓       |
+| Project            | Single attribute (`id`)                  | `organization_id`, `manager_id`, `category_id`, `name` | No (single-attribute PK)     | ✓       |
+| User               | Single attribute (`id`)                  | `project_id`, `email`                                  | No (single-attribute PK)     | ✓       |
+| Task               | Single attribute (`id`)                  | `user_id`, `project_id`, `created_by_user`             | No (single-attribute PK)     | ✓       |
+| Tracker            | Single attribute (`id`)                  | `user_id`, `task_id`, `project_id`                     | No (single-attribute PK)     | ✓       |
+| user_organization  | Composite (`user_id`, `organization_id`) | None                                                   | No (no non-prime attributes) | ✓       |
+| task_assigned_user | Composite (`user_id`, `task_id`)         | None                                                   | No (no non-prime attributes) | ✓       |
+
+#### Final 2NF Relations (Identical to 1NF)
+
+**Organization**
+
+- `id` (PK)
+- `namae`
+
+**Project**
+
+- `id` (PK)
+- `organization_id` (FK)
+- `manager_id` (FK)
+- `category_id` (FK)
+- `name`
+
+**User**
+
+- `id` (PK)
+- `project_id` (FK)
+- `email`
+
+**Task**
+
+- `id` (PK)
+- `user_id` (FK)
+- `project_id` (FK)
+- `created_by_user` (FK)
+
+**Tracker**
+
+- `id` (PK)
+- `user_id` (FK)
+- `task_id` (FK)
+- `project_id` (FK)
+
+**user_organization**
+
+- `user_id` (FK) - part of composite PK
+- `organization_id` (FK) - part of composite PK
+
+**task_assigned_user**
+
+- `user_id` (FK) - part of composite PK
+- `task_id` (FK) - part of composite PK
