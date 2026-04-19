@@ -502,3 +502,88 @@ For 2NF we need to make sure below rules meets.
 
 - `user_id` (FK) - part of composite PK
 - `task_id` (FK) - part of composite PK
+
+#### 3NF
+
+We need to ensure below rules meet for 3NF:
+
+- The relation is in 2NF
+- No transitive dependencies (no non-prime attribute depends on another non-prime attribute)
+
+##### Analysis of Each Relation
+
+**Organization**
+
+- **Primary Key:** `id`
+- **Candidate Keys:** `id`, `namae`
+- **Non-prime attributes:** None (only key attributes)
+- **Transitive dependencies:** None
+- **Status:** Already in 3NF
+
+**Project**
+
+- **Primary Key:** `id`
+- **Candidate Keys:** `id`, `name`
+- **Non-prime attributes:** `organization_id`, `manager_id`, `category_id`
+- **Functional dependencies assumed:** `id` → all attributes; `name` → all attributes
+- **Transitive dependencies:** None, because no non-prime attribute determines another non-prime attribute (no FDs like `organization_id` → `manager_id` are given)
+- **Status:** Already in 3NF
+
+**User**
+
+- **Primary Key:** `id`
+- **Candidate Keys:** `id`, `email`
+- **Non-prime attributes:** `project_id`
+- **Transitive dependencies:** None (`project_id` does not determine any other non-prime attribute)
+- **Status:** Already in 3NF
+
+**Task**
+
+- **Primary Key:** `id`
+- **Candidate Keys:** `id` (assuming no other unique constraints given)
+- **Non-prime attributes:** `user_id`, `project_id`, `created_by_user`
+- **Transitive dependencies:** None (no FD among non-prime attributes)
+- **Status:** Already in 3NF
+
+**Tracker**
+
+- **Primary Key:** `id`
+- **Candidate Keys:** `id`
+- **Non-prime attributes:** `user_id`, `task_id`, `project_id`
+- **Transitive dependencies:** None
+- **Status:** Already in 3NF
+
+**user_organization**
+
+- **Primary Key:** (`user_id`, `organization_id`)
+- **Non-prime attributes:** None
+- **Transitive dependencies:** None
+- **Status:** Already in 3NF
+
+**task_assigned_user**
+
+- **Primary Key:** (`user_id`, `task_id`)
+- **Non-prime attributes:** None
+- **Transitive dependencies:** None
+- **Status:** Already in 3NF
+
+##### Final 3NF Schema
+
+| Relation           | Attributes                                         | Primary Key                |
+| ------------------ | -------------------------------------------------- | -------------------------- |
+| Organization       | id, namae                                          | id                         |
+| Project            | id, organization_id, manager_id, category_id, name | id                         |
+| User               | id, project_id, email                              | id                         |
+| Task               | id, user_id, project_id, created_by_user           | id                         |
+| Tracker            | id, user_id, task_id, project_id                   | id                         |
+| user_organization  | user_id, organization_id                           | (user_id, organization_id) |
+| task_assigned_user | user_id, task_id                                   | (user_id, task_id)         |
+
+**No decomposition was necessary** because the schema already satisfies 3NF based on the given constraints and absence of transitive dependencies.
+
+### Consceptual data model diagram
+
+I used dbdiagram.io to generate the diagram
+LINK: https://dbdiagram.io/d/69e438f20aa78f6bc109ea68
+
+![TaskFlow database caceptual data model](/RDBMS-problems/diagrams/TaskFlow-Database-Data-mdel.png)
